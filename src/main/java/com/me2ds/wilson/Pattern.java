@@ -9,6 +9,22 @@ public class Pattern {
     private int dst_port;
     private int period;
 
+    public String getSrc_ip() {
+        return src_ip;
+    }
+
+    public String getDst_ip() {
+        return dst_ip;
+    }
+
+    public int getDst_port() {
+        return dst_port;
+    }
+
+    public int getPeriod() {
+        return period;
+    }
+
     @Override
     public String toString() {
         return "Pattern{" +

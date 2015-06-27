@@ -7,4 +7,9 @@ public class Constants {
 
     public static final String WILSON_CONF = "wilson.conf";
     public static final String WILSON_CONF_ENV_KEY = "wilson.conf";
+    public static final String WILSON_PATTERNS_LIST = "wilson.patterns";
+    public static final String WILSON_PATTERN = "pattern";
+    public static final String APP_NAME = "wilson";
+
+
 }
