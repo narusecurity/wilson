@@ -47,11 +47,35 @@ public class Wilson {
         int srcSize = srcConfig.getInt("size");
 
         List<String> ipPrefix = srcConfig.getStringList("ip_prefix");
+        if (ipPrefix.isEmpty()) {
+            logger.error("At least one IP prefix must be provided to create SRC_IP's");
+            System.exit(1);
+        } // if
+
+        long numberOfPossiblePermutation = 0;
+        for (String prefix : ipPrefix) {
+            long tmp = 1;
+            for (int i = (4 - prefix.split("\\.").length); i > 0; i--) {
+                if (i > 1) {
+                    tmp *= 255;
+                } else {
+                    tmp *= 254;
+                }
+            }
+            numberOfPossiblePermutation += tmp;
+        }
+        logger.info("{} usable host IP addresses can be generated", numberOfPossiblePermutation);
+
+        if (numberOfPossiblePermutation < srcSize) {
+            logger.error("Requested host size cannot be met with the given IP prefixes");
+            System.exit(1);
+        }
+
         // TODO calculate the max possible number of addresses and warn user if srcSize is greater
         while (src.size() < srcSize) {
             String srcIp = ipPrefix.get(PRNG.getInt(ipPrefix.size()));
             for (int j = 4 - srcIp.split("\\.").length; j > 0; j--) {
-                int chosen = (j > 1) ? PRNG.getInt(255) : PRNG.getInt(1, 254);
+                int chosen = (j > 1) ? PRNG.getInt(255) : PRNG.getInt(1, 255);
                 srcIp += "." + chosen;
             }
             if (src.contains(srcIp)) continue;
@@ -65,7 +89,7 @@ public class Wilson {
             String dstIp = "" + PRNG.getInt(1, 254);
             for (int j = 0; j < 3; j++) {
                 dstIp += ".";
-                dstIp += (j > 1) ? PRNG.getInt(255) : PRNG.getInt(1, 254);
+                dstIp += (j > 1) ? PRNG.getInt(255) : PRNG.getInt(1, 255);
             }
             if (dst.containsKey(dstIp)) continue;
             int numPorts = PRNG.getInt(1, portVariation);
@@ -77,6 +101,9 @@ public class Wilson {
         }
     }
 
+    /**
+     *
+     */
     private void createPatternActors() {
         Gson gson = new Gson();
         List<? extends Config> patternsList = userConfig.getConfigList(Constants.WILSON_PATTERNS_LIST);
@@ -85,11 +112,16 @@ public class Wilson {
                     pattern.resolve().getValue(Constants.WILSON_PATTERN).render(),
                     Pattern.class
             );
+            // TODO display pattern info
             src.add(pobj.getSrc_ip() + "*");
+            // TODO add randomly generated ports
             dst.put(pobj.getDst_ip() + "*", Collections.singletonList(pobj.getDst_port()));
         } // for
     }
 
+    /**
+     *
+     */
     private void loadConfig() {
         String confPath = System.getProperty(Constants.WILSON_CONF_ENV_KEY);
         final File userConfigFile = (confPath != null) ? new File(confPath) : new File(Constants.WILSON_CONF);
