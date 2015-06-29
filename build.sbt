@@ -14,5 +14,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"               %% "akka-slf4j"             % "2.3.10",
   "com.typesafe.akka"               %% "akka-testkit"           % "2.3.10"         % "test",
   "ch.qos.logback"                  % "logback-classic"         % "1.0.13",
-  "com.google.code.gson"            % "gson"                    % "2.3.1"
+  "com.google.code.gson"            % "gson"                    % "2.3.1",
+  "org.antlr"                       % "antlr4"                  % "4.5",
+  "org.json"                        % "json"                    % "20140107"
 )

@@ -1,4 +1,4 @@
-package com.me2ds.wilson;
+package com.me2ds.wilson.pattern;
 
 /**
  * Created by w3kim on 15. 6. 26..
