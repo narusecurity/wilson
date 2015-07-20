@@ -1,5 +1,9 @@
 package com.me2ds.wilson;
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
+import akka.actor.Scheduler;
 import com.google.gson.Gson;
 import com.me2ds.wilson.pattern.InvalidPatternException;
 import com.me2ds.wilson.pattern.Pattern;
@@ -12,6 +16,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stringtemplate.v4.ST;
+import scala.concurrent.duration.Duration;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +24,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static com.me2ds.wilson.Constants.*;
+import static akka.pattern.Patterns.gracefulStop;
 
 /**
  * Created by w3kim on 15. 6. 26..
@@ -26,11 +35,16 @@ import java.util.*;
 public class Wilson {
     private static final Logger logger = LoggerFactory.getLogger(Wilson.class.getSimpleName());
 
-    private Config wilsonConfig;
-    private List<String> templates;
-    private List<Pattern> patterns;
-    private List<String> src = new ArrayList<>();
-    private Map<String, List<Integer>> dst = new HashMap<>();
+    private static Config wilsonConfig;
+    private static List<String> templates;
+    private static List<Pattern> patterns;
+    private static List<String> src = new ArrayList<>();
+    private static Map<String, List<Integer>> dst = new HashMap<>();
+
+    /**
+     *
+     */
+    private ActorRef manager;
 
     /**
      *
@@ -54,20 +68,37 @@ public class Wilson {
         createPatternActors();
         createNoiseActors();
 
-        Collections.sort(src);
-
-        System.out.println("SRC---" + src.size());
-        for (String sip : src) {
-            System.out.println("\t" + sip);
-        }
-        System.out.println("DST---" + dst.size());
-        SortedSet<String> dipSet = new TreeSet<>(dst.keySet());
-
-        for (String dip : dipSet) {
-            for (Integer port : dst.get(dip)) {
-                System.out.println("\t" + dip + ":" + port);
+        final ActorSystem system = ActorSystem.create(APP_NAME);
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                shutdown(30);
             }
-        }
+        }));
+
+        manager = system.actorOf(Props.create(Manager.class), "manager");
+
+        schedule(system);
+
+
+    }
+
+    /**
+     *
+     * @param system
+     */
+    private void schedule(ActorSystem system) {
+        Scheduler scheduler = system.scheduler();
+        scheduler.schedule(DURATION_ZERO, DURATION_TICK, manager, "tick", system.dispatcher(), null);
+    }
+
+    /**
+     *
+     * @param timeout
+     */
+    private void shutdown(int timeout) {
+        // clean up code
+        gracefulStop(manager, Duration.create(timeout, TimeUnit.SECONDS), "shutdown");
     }
 
     /**
@@ -77,11 +108,11 @@ public class Wilson {
     private List<Pattern> loadPatterns() throws InvalidPatternException {
         List<Pattern> patterns = new ArrayList<>();
         Gson gson = new Gson();
-        List<? extends Config> patternsList = wilsonConfig.getConfigList(Constants.WILSON_PATTERNS_LIST);
+        List<? extends Config> patternsList = wilsonConfig.getConfigList(WILSON_PATTERNS_LIST);
         for (Config pattern : patternsList) {
             try {
                 patterns.add(gson.fromJson(
-                        pattern.resolve().getValue(Constants.WILSON_PATTERN).render(),
+                        pattern.resolve().getValue(WILSON_PATTERN).render(),
                         Pattern.class
                 ));
             } catch (Exception e) {
@@ -212,8 +243,8 @@ public class Wilson {
      *
      */
     private Config loadWilsonConfig() {
-        String confPath = System.getProperty(Constants.WILSON_CONF_ENV_KEY);
-        final File userConfigFile = (confPath != null) ? new File(confPath) : new File(Constants.WILSON_CONF);
+        String confPath = System.getProperty(WILSON_CONF_ENV_KEY);
+        final File userConfigFile = (confPath != null) ? new File(confPath) : new File(WILSON_CONF);
         if (!userConfigFile.exists()) {
             logger.error("Configuration file not found");
             System.exit(1);
@@ -221,6 +252,10 @@ public class Wilson {
         return ConfigFactory.parseFile(userConfigFile);
     }
 
+    /**
+     * Main
+     * @param args
+     */
     public static void main(String[] args) {
         new Wilson().run();
     }
