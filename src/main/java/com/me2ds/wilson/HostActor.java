@@ -18,13 +18,14 @@ public class HostActor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        if (message.equals("tick")) {
+        if (message instanceof Tick) {
             if (PRNG.TF()) {
                 String template = templates.get(PRNG.getInt(templates.size()));
                 String dip = new ArrayList<>(destinations.keySet()).get(PRNG.getInt(destinations.size()));
                 List<Integer> ports = destinations.get(dip);
                 int port = ports.get(PRNG.getInt(ports.size()));
 
+                // TODO : Wrap this into a builder
                 ST test = new ST(template);
                 test.add("sip", getSelf().path().name());
                 test.add("dip", dip);

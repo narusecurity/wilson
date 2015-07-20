@@ -46,7 +46,7 @@ public class HostManager extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        if (message.equals("tick")) {
+        if (message instanceof Tick) {
             router.route(message, getSender());
         } else if (message instanceof Shutdown) {
             shutdown((Shutdown) message);

@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stringtemplate.v4.ST;
+import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
 
@@ -110,7 +111,13 @@ public class Wilson {
      */
     private void schedule(ActorSystem system) {
         Scheduler scheduler = system.scheduler();
-        scheduler.schedule(DURATION_ZERO, DURATION_TICK, manager, "tick", system.dispatcher(), null);
+
+        ExecutionContextExecutor dispatcher = system.dispatcher();
+        Tick tick = Tick.tick();
+        scheduler.schedule(DURATION_ZERO, tick.getInterval(), manager, tick, dispatcher, null);
+
+        Tick hourly = Tick.hourly();
+        scheduler.schedule(hourly.getInterval(), hourly.getInterval(), manager, hourly, dispatcher, null);
     }
 
     /**
