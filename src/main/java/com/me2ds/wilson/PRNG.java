@@ -19,4 +19,8 @@ public class PRNG {
     public static int getInt(int floor, int ceiling) {
         return rand.nextInt(ceiling - floor) + floor;
     }
+
+    public static boolean TF() {
+        return getInt(10) % 2 == 0;
+    }
 }

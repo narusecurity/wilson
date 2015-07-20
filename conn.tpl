@@ -2,6 +2,7 @@
     'src_ip': '<sip>',
     'dst_ip': '<dip>',
     'dst_port': <dport>,
-    'size': <size>,
-    'logTypeName': 'conn'
+    'src_bytes': <sbyte>,
+    'dst_bytes': <dbyte>,
+    'logTypeName': 'conn.log'
 }

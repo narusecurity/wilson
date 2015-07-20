@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stringtemplate.v4.ST;
 import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,20 +47,40 @@ public class Wilson {
      */
     private ActorRef manager;
 
+    public static Config getConfig() {
+        return wilsonConfig;
+    }
+
+    public static List<String> getTemplates() {
+        return templates;
+    }
+
+    public static List<Pattern> getPatterns() {
+        return patterns;
+    }
+
+    public static List<String> getHosts() {
+        return src;
+    }
+
+    public static Map<String, List<Integer>> getDestinations() {
+        return dst;
+    }
+
     /**
      *
      */
     private void run() {
-        this.wilsonConfig = loadWilsonConfig();
+        wilsonConfig = loadWilsonConfig();
 
         try {
-            this.templates = loadTemplates();
+            templates = loadTemplates();
         } catch (TemplateNotFoundException | InvalidTemplateException e) {
             logger.error(e.getMessage());
             System.exit(1);
         }
         try {
-            this.patterns = loadPatterns();
+            patterns = loadPatterns();
         } catch (InvalidPatternException e ){
             logger.error(e.getMessage());
             System.exit(1);
@@ -98,7 +119,8 @@ public class Wilson {
      */
     private void shutdown(int timeout) {
         // clean up code
-        gracefulStop(manager, Duration.create(timeout, TimeUnit.SECONDS), "shutdown");
+        FiniteDuration duration = Duration.create(timeout, TimeUnit.SECONDS);
+        gracefulStop(manager, duration, Shutdown.create(duration));
     }
 
     /**
@@ -160,7 +182,8 @@ public class Wilson {
         test.add("sip", "192.168.0.100");
         test.add("dip", "8.8.8.8");
         test.add("dport", 25);
-        test.add("size", 100);
+        test.add("sbyte", 100);
+        test.add("dbyte", 100);
         new JSONObject(test.render());
     }
 
@@ -231,7 +254,7 @@ public class Wilson {
      */
     private void createPatternActors() {
         Gson gson = new Gson();
-        for (Pattern pattern : this.patterns) {
+        for (Pattern pattern : patterns) {
             // TODO display pattern info
             src.add(pattern.getSrc_ip() + "*");
             // TODO add randomly generated ports
