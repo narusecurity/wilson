@@ -1,0 +1,16 @@
+sudo: false
+
+language: scala
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION compile test:compile
+
+scala:
+  - 2.11.7
+
+jdk:
+  - oraclejdk7
+
+notifications:
+  email:
+    - eric@me2ds.com
