@@ -34,7 +34,7 @@ public class HostActor extends UntypedActor {
                 test.add("dport", port);
                 test.add("sbyte", 100);
                 test.add("dbyte", 100);
-                System.out.println(new JSONObject(test.render()).toString(3));
+                System.out.println(new JSONObject(test.render()).toString());
             }
         } else {
             unhandled(message);
