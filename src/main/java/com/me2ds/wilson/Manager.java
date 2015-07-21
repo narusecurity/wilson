@@ -44,7 +44,7 @@ public class Manager extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        if (message.equals("tick")) {
+        if (message instanceof Tick) {
             this.tickCounter.incrementAndGet();
             for (ActorRef child : getContext().getChildren()) {
                 child.tell(message, getSelf());

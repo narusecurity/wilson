@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.me2ds.wilson.Constants.*;
 import static akka.pattern.Patterns.gracefulStop;
@@ -100,10 +101,13 @@ public class Wilson {
 
         manager = system.actorOf(Props.create(Manager.class), "manager");
 
+        tickCounter = new AtomicLong(System.currentTimeMillis());
         schedule(system);
 
 
     }
+
+    private static AtomicLong tickCounter;
 
     /**
      *
@@ -111,13 +115,29 @@ public class Wilson {
      */
     private void schedule(ActorSystem system) {
         Scheduler scheduler = system.scheduler();
-
         ExecutionContextExecutor dispatcher = system.dispatcher();
-        Tick tick = Tick.tick();
-        scheduler.schedule(DURATION_ZERO, tick.getInterval(), manager, tick, dispatcher, null);
 
-        Tick hourly = Tick.hourly();
-        scheduler.schedule(hourly.getInterval(), hourly.getInterval(), manager, hourly, dispatcher, null);
+        /**
+         *
+         */
+        scheduler.schedule(DURATION_ZERO, DURATION_TICK, new Runnable() {
+            @Override
+            public void run() {
+                Tick tick = Tick.tick(tickCounter.addAndGet(1000L));
+                manager.tell(tick, ActorRef.noSender());
+            }
+        }, dispatcher);
+
+        /**
+         *
+         */
+        scheduler.schedule(DURATION_ZERO, DURATION_HOUR, new Runnable() {
+            @Override
+            public void run() {
+                Tick hourly = Tick.hourly(tickCounter.get());
+                manager.tell(hourly, ActorRef.noSender());
+            }
+        }, dispatcher);
     }
 
     /**
@@ -186,6 +206,7 @@ public class Wilson {
      */
     private void validateTemplate(String template) throws JSONException {
         ST test = new ST(template);
+        test.add("timestamp_double", System.currentTimeMillis() / 1000.0);
         test.add("sip", "192.168.0.100");
         test.add("dip", "8.8.8.8");
         test.add("dport", 25);

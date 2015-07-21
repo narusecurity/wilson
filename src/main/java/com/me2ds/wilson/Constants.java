@@ -18,4 +18,5 @@ public class Constants {
 
     public static final FiniteDuration DURATION_TICK = Duration.create(1, TimeUnit.MILLISECONDS);
     public static final FiniteDuration DURATION_ZERO = Duration.create(0, TimeUnit.SECONDS);
+    public static final FiniteDuration DURATION_HOUR = Duration.create(1, TimeUnit.HOURS);
 }

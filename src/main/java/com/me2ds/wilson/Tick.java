@@ -13,15 +13,17 @@ public class Tick implements Serializable {
 
     public static final int TYPE_TICK = 0;
     public static final int TYPE_HOURLY = 1;
+    private final long timestamp;
 
     private int type;
     private FiniteDuration interval;
 
-    private Tick(int interval, int type) {
-        this(interval, type, TimeUnit.MILLISECONDS);
+    private Tick(long timestamp, int interval, int type) {
+        this(timestamp, interval, type, TimeUnit.MILLISECONDS);
     }
 
-    private Tick(int interval, int type, TimeUnit timeUnit) {
+    private Tick(long timestamp, int interval, int type, TimeUnit timeUnit) {
+        this.timestamp = timestamp;
         this.type = type;
         this.interval = Duration.create(interval, timeUnit);
     }
@@ -30,16 +32,16 @@ public class Tick implements Serializable {
      *
      * @return
      */
-    public static Tick hourly() {
-        return new Tick(3600, TYPE_HOURLY);
+    public static Tick hourly(long timestamp) {
+        return new Tick(timestamp, 3600, TYPE_HOURLY);
     }
 
     /**
      *
      * @return
      */
-    public static Tick tick() {
-        return new Tick(1, TYPE_TICK);
+    public static Tick tick(long timestamp) {
+        return new Tick(timestamp, 1, TYPE_TICK);
     }
 
     /**
@@ -56,5 +58,13 @@ public class Tick implements Serializable {
      */
     public int getType() {
         return type;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public long getTimestamp() {
+        return timestamp;
     }
 }

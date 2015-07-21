@@ -25,12 +25,15 @@ public class HostManager extends UntypedActor {
      */
     private List<String> hosts;
 
+    /**
+     *
+     */
     private Router router;
 
-    @Override
-    public void preStart() throws Exception {
-        super.preStart();
-
+    /**
+     *
+     */
+    {
         this.hosts = Wilson.getHosts();
 
         logger.info("HostManager is initializing with {} hosts", this.hosts.size());
@@ -55,6 +58,10 @@ public class HostManager extends UntypedActor {
         }
     }
 
+    /**
+     *
+     * @param shutdown
+     */
     private void shutdown(Shutdown shutdown) {
         logger.info("shutting down HostManager");
         getContext().stop(getSelf());

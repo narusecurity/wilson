@@ -24,9 +24,11 @@ public class HostActor extends UntypedActor {
                 String dip = new ArrayList<>(destinations.keySet()).get(PRNG.getInt(destinations.size()));
                 List<Integer> ports = destinations.get(dip);
                 int port = ports.get(PRNG.getInt(ports.size()));
+                long timestamp = ((Tick) message).getTimestamp();
 
                 // TODO : Wrap this into a builder
                 ST test = new ST(template);
+                test.add("timestamp_double", String.format("%f", (double) timestamp / 1000.0));
                 test.add("sip", getSelf().path().name());
                 test.add("dip", dip);
                 test.add("dport", port);
