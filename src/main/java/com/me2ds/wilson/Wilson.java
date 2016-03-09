@@ -53,6 +53,8 @@ public class Wilson {
         return wilsonConfig;
     }
 
+    public static Config getRabbitConfig() { return getConfig().getConfig("wilson.rabbitmq"); }
+
     public static List<String> getTemplates() {
         return templates;
     }
@@ -123,7 +125,7 @@ public class Wilson {
         scheduler.schedule(DURATION_ZERO, DURATION_TICK, new Runnable() {
             @Override
             public void run() {
-                Tick tick = Tick.tick(tickCounter.addAndGet(1000L));
+                Tick tick = Tick.tick(System.currentTimeMillis());
                 manager.tell(tick, ActorRef.noSender());
             }
         }, dispatcher);
@@ -134,7 +136,7 @@ public class Wilson {
         scheduler.schedule(DURATION_ZERO, DURATION_HOUR, new Runnable() {
             @Override
             public void run() {
-                Tick hourly = Tick.hourly(tickCounter.get());
+                Tick hourly = Tick.tick(System.currentTimeMillis());
                 manager.tell(hourly, ActorRef.noSender());
             }
         }, dispatcher);
@@ -284,9 +286,9 @@ public class Wilson {
         Gson gson = new Gson();
         for (Pattern pattern : patterns) {
             // TODO display pattern info
-            src.add(pattern.getSrc_ip() + "*");
+            src.add(pattern.getSrc_ip());
             // TODO add randomly generated ports
-            dst.put(pattern.getDst_ip() + "*", Collections.singletonList(pattern.getDst_port()));
+            dst.put(pattern.getDst_ip(), Collections.singletonList(pattern.getDst_port()));
         } // for
     }
 

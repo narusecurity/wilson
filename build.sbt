@@ -15,6 +15,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"               %% "akka-testkit"           % "2.3.10"         % "test",
   "ch.qos.logback"                  % "logback-classic"         % "1.0.13",
   "com.google.code.gson"            % "gson"                    % "2.3.1",
-  "org.antlr"                       % "antlr4"                  % "4.5",
-  "org.json"                        % "json"                    % "20140107"
+  "org.antlr"                       % "antlr4"                  % "4.5"            % "provided",
+  "org.antlr"                       % "ST4"                     % "4.0.8"          % "compile",
+  "org.json"                        % "json"                    % "20140107",
+  "com.rabbitmq"                    % "amqp-client"             % "3.6.1"
 )

@@ -5,5 +5,6 @@
     'dst_port': <dport>,
     'src_bytes': <sbyte>,
     'dst_bytes': <dbyte>,
+    'device_ip': '10.0.0.1',
     'log_type_Name': 'conn.log'
 }
