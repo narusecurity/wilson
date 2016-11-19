@@ -1,10 +1,7 @@
 package com.me2ds.wilson;
 
+import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.typesafe.config.Config;
 import org.json.JSONObject;
 import org.stringtemplate.v4.ST;
 
@@ -19,29 +16,10 @@ public class HostActor extends UntypedActor {
 
     private List<String> templates = Wilson.getTemplates();
     private Map<String, List<Integer>> destinations = Wilson.getDestinations();
-    private Connection conn;
-    private Channel channel;
-    private String exchangeName;
-    private String routingKey;
+    private ActorRef hostManager;
 
-
-    @Override
-    public void preStart() throws Exception {
-        super.preStart();
-        Config rc = Wilson.getRabbitConfig();
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setUsername(rc.getString("username"));
-        factory.setPassword(rc.getString("password"));
-        factory.setVirtualHost(rc.getString("virtualhost"));
-        factory.setHost(rc.getString("host"));
-        factory.setPort(rc.getInt("port"));
-        this.conn = factory.newConnection();
-        this.channel = this.conn.createChannel();
-
-        String queueName = rc.getString("queue");
-        this.exchangeName = rc.getString("exchange");
-        this.routingKey = rc.getString("routingkey");
-        this.channel.queueBind(queueName, exchangeName, routingKey);
+    public HostActor(ActorRef hostManager) {
+        this.hostManager = hostManager;
     }
 
     @Override
@@ -62,8 +40,10 @@ public class HostActor extends UntypedActor {
                 test.add("dport", port);
                 test.add("sbyte", 100);
                 test.add("dbyte", 100);
+                test.add("duration", 30);
+                test.add("dst_asname", "fake_as");
 
-                channel.basicPublish(exchangeName, routingKey, null, new JSONObject(test.render()).toString().getBytes());
+                hostManager.tell(new JSONObject(test.render()), getSelf());
             }
         } else {
             unhandled(message);

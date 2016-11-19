@@ -53,7 +53,7 @@ public class Wilson {
         return wilsonConfig;
     }
 
-    public static Config getRabbitConfig() { return getConfig().getConfig("wilson.rabbitmq"); }
+    public static Config getRabbitConfig() { return wilsonConfig.getConfig("wilson.rabbitmq"); }
 
     public static List<String> getTemplates() {
         return templates;
@@ -214,6 +214,8 @@ public class Wilson {
         test.add("dport", 25);
         test.add("sbyte", 100);
         test.add("dbyte", 100);
+        test.add("duration", 10);
+        test.add("dst_asname", "fake");
         new JSONObject(test.render());
     }
 
