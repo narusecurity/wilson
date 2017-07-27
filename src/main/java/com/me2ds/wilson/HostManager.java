@@ -2,19 +2,20 @@ package com.me2ds.wilson;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.actor.UntypedActor;
 import akka.routing.ActorRefRoutee;
 import akka.routing.BroadcastRoutingLogic;
 import akka.routing.Routee;
 import akka.routing.Router;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
+import com.me2ds.wilson.spring.SpringActor;
 import com.typesafe.config.Config;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 
-import java.io.IOException;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,44 +23,31 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by w3kim on 15-07-20.
  */
-public class HostManager extends UntypedActor {
+@Named("HostManager")
+@Scope("prototype")
+public class HostManager extends SpringActor {
 
+    public static final String NAME = "host_manager";
     private static final Logger logger = LoggerFactory.getLogger(HostManager.class.getSimpleName());
-    /**
-     *
-     */
+
     private static final long INTERVAL = 1000;
-    /**
-     *
-     */
+
     private List<String> hosts;
-    /**
-     *
-     */
+
     private Router router;
-    /**
-     *
-     */
-    private Connection conn;
-    private Channel channel;
+
+    @Autowired
+    private RabbitTemplate template;
+
+    private int numMessagesPerSecond;
     private String exchangeName;
     private String routingKey;
-    /**
-     *
-     */
-    private int numMessagesPerSecond;
-    /**
-     *
-     */
+
     private AtomicInteger sent;
-    /**
-     *
-     */
+
     private long mark;
 
-    /**
-     *
-     */ {
+    {
         this.hosts = Wilson.getHosts();
 
         logger.info("HostManager is initializing with {} hosts", this.hosts.size());
@@ -72,19 +60,11 @@ public class HostManager extends UntypedActor {
         router = new Router(new BroadcastRoutingLogic(), routees);
 
         Config rc = Wilson.getRabbitConfig();
-        this.conn = RabbitConnection.getConnection();
-        try {
-            this.channel = this.conn.createChannel();
-            String queueName = rc.getString("queue");
-            this.exchangeName = rc.getString("exchange");
-            this.routingKey = rc.getString("routingkey");
-            this.channel.queueBind(queueName, exchangeName, routingKey);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.exchangeName = rc.getString("exchange");
+        this.routingKey = rc.getString("routingkey");
 
-        if (rc.hasPath("num_messages_per_second"))
-            this.numMessagesPerSecond = Wilson.getConfig().getInt("wilson.num_messages_per_second");
+        Config wilson = Wilson.getConfig();
+        this.numMessagesPerSecond = wilson.getInt("wilson.num_messages_per_second");
 
         sent = new AtomicInteger(0);
 
@@ -102,11 +82,9 @@ public class HostManager extends UntypedActor {
                 mark = ts;
             }
 
-            if (numMessagesPerSecond == 0 ||
-                    (sent.get() < numMessagesPerSecond)) {
-                // send
+            if (numMessagesPerSecond == 0 || (sent.get() < numMessagesPerSecond)) {
+                template.convertAndSend(exchangeName, routingKey, message.toString());
                 sent.incrementAndGet();
-                channel.basicPublish(exchangeName, routingKey, null, message.toString().getBytes());
             }
         } else if (message instanceof Shutdown) {
             shutdown((Shutdown) message);

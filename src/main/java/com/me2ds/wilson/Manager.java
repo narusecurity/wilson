@@ -2,18 +2,24 @@ package com.me2ds.wilson;
 
 import akka.actor.*;
 import akka.japi.Procedure;
+import com.me2ds.wilson.spring.SpringActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.context.annotation.Scope;
 
 import static akka.pattern.Patterns.gracefulStop;
 
 /**
  * Created by w3kim on 15-07-19.
  */
-public class Manager extends UntypedActor {
+@Named("Manager")
+@Scope("prototype")
+public class Manager extends SpringActor {
 
+    public static final String NAME = "manager";
     private static final Logger logger = LoggerFactory.getLogger(Manager.class.getSimpleName());
 
     /**
@@ -24,7 +30,7 @@ public class Manager extends UntypedActor {
     /**
      *
      */
-    private ActorRef hosts;
+    private ActorRef hostManager;
 
     @Override
     public void preStart() throws Exception {
@@ -32,7 +38,7 @@ public class Manager extends UntypedActor {
 
         logger.info("Manager initializing");
         this.tickCounter = new AtomicInteger();
-        this.hosts = getContext().actorOf(Props.create(HostManager.class), "hosts");
+        this.hostManager = getContext().actorOf(props("HostManager"), HostManager.NAME);
     }
 
     @Override

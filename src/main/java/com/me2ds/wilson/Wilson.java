@@ -15,6 +15,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.stringtemplate.v4.ST;
 import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.Duration;
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.me2ds.wilson.Constants.*;
 import static akka.pattern.Patterns.gracefulStop;
+import static com.me2ds.wilson.spring.SpringExtension.SpringExtProvider;
 
 /**
  * Created by w3kim on 15. 6. 26..
@@ -93,7 +95,14 @@ public class Wilson {
         createPatternActors();
         createNoiseActors();
 
-        final ActorSystem system = ActorSystem.create(APP_NAME);
+        // create a spring context and scan the classes
+        AnnotationConfigApplicationContext ctx =
+                new AnnotationConfigApplicationContext();
+
+        ctx.scan("com.me2ds.wilson");
+        ctx.refresh();
+
+        final ActorSystem system = ctx.getBean(ActorSystem.class, wilsonConfig);
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
@@ -101,7 +110,8 @@ public class Wilson {
             }
         }));
 
-        manager = system.actorOf(Props.create(Manager.class), "manager");
+        Props managerProps = SpringExtProvider.get(system).props("Manager");
+        manager = system.actorOf(managerProps, Manager.NAME);
 
         tickCounter = new AtomicLong(System.currentTimeMillis());
         schedule(system);
